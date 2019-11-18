@@ -4,17 +4,19 @@ const logUpdate=require("log-update");
 const _=require("lodash");
 const ProgressBar=require("progress");
 const chalk=require("chalk");
+const commander=require("commander");
 
 _initialRange=[0,10]; //initial time stamp starting range
 _randomRange=[3,10]; //time stamp increment random range
-_imageBatch=10; // ffmpeg extract process number
 
 async function main()
 {
-    var {totalTimestamps,timestamps}=await generateChunkTimestamps("azur2.mkv",_initialRange,_randomRange,_imageBatch);
+    var commandParams=getCommandParams();
+    var {totalTimestamps,timestamps}=await generateChunkTimestamps(commandParams.targetVid,
+        _initialRange,_randomRange,commandParams.imageBatch);
 
     console.log("total timestamps:",totalTimestamps);
-    console.log("chunk size:",_imageBatch);
+    console.log("chunk size:",commandParams.imageBatch);
 
     var mainbar=new ProgressBar(":bar :current / :total :percent",{
         total:timestamps.length,
@@ -91,6 +93,35 @@ function doExtract(videofile,timestamps)
     });
 
     return Promise.all(extractPromises);
+}
+
+/* get command line params.
+   {
+     string targetVid: path to target video file
+     int imageBatch: process imagebatch
+   }*/
+function getCommandParams()
+{
+    var res={};
+
+    commander.arguments("<targetVid>")
+    .usage("<target video file>")
+    .option("-i, --image-batch <batchNum>","number of processes to use to extract images",10)
+    .action((targetVid)=>{
+        res.targetVid=targetVid;
+    });
+
+    commander.parse(process.argv);
+
+    if (!res.targetVid)
+    {
+        console.log("missing target file");
+        process.exit();
+    }
+
+    res.imageBatch=commander.imageBatch;
+
+    return res;
 }
 
 main();
