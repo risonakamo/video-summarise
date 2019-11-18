@@ -2,6 +2,8 @@ const {getVideoDurationInSeconds}=require("get-video-duration")
 const extractFrames=require("ffmpeg-extract-frames");
 const logUpdate=require("log-update");
 const _=require("lodash");
+const ProgressBar=require("progress");
+const chalk=require("chalk");
 
 _initialRange=[0,10]; //initial time stamp starting range
 _randomRange=[3,10]; //time stamp increment random range
@@ -12,11 +14,21 @@ async function main()
     var {totalTimestamps,timestamps}=await generateChunkTimestamps("azur2.mkv",_initialRange,_randomRange,_imageBatch);
 
     console.log("total timestamps:",totalTimestamps);
+    console.log("chunk size:",_imageBatch);
+
+    var mainbar=new ProgressBar(":bar :current / :total :percent",{
+        total:timestamps.length,
+        width:20,
+        clear:true,
+        incomplete:chalk.bgWhiteBright(" "),
+        complete:chalk.bgGreenBright(" ")
+    });
 
     for (var x=0;x<timestamps.length;x++)
     {
         await doExtract("azur2.mkv",timestamps[x]);
-        logUpdate(`${x+1}/${timestamps.length}`);
+        // logUpdate(`${x+1}/${timestamps.length}`);
+        mainbar.tick();
     }
 }
 
@@ -60,11 +72,21 @@ async function generateChunkTimestamps(videofile,initialRange=[0,10],randomRange
    screenshots are named with the timestamp*/
 function doExtract(videofile,timestamps)
 {
+    var bar=new ProgressBar(":bar :current / :total :percent",{
+        total:timestamps.length,
+        width:20,
+        clear:true,
+        incomplete:chalk.bgWhiteBright(" "),
+        complete:chalk.bgMagentaBright(" ")
+    });
+
     var extractPromises=_.map(timestamps,(x,i)=>{
         return extractFrames({
             input:videofile,
             output:`frames/screenshot-${x}.png`,
             timestamps:[x]
+        }).then(()=>{
+            bar.tick();
         });
     });
 
