@@ -9,6 +9,7 @@
     "get-video-duration": "^1.0.3",
     "lodash": "^4.17.15",
     "log-update": "^3.3.0",
+    "mkdirp": "^0.5.1",
     "progress": "^2.0.3"
   }
 }

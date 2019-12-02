@@ -5,6 +5,7 @@ const _=require("lodash");
 const ProgressBar=require("progress");
 const chalk=require("chalk");
 const commander=require("commander");
+const mkdirp=require("mkdirp");
 
 _initialRange=[0,10]; //initial time stamp starting range
 _randomRange=[3,10]; //time stamp increment random range
@@ -15,8 +16,10 @@ async function main()
     var {totalTimestamps,timestamps}=await generateChunkTimestamps(commandParams.targetVid,
         _initialRange,_randomRange,commandParams.imageBatch);
 
+    mkdirp("frames");
+
     console.log("total timestamps:",totalTimestamps);
-    console.log("chunk size:",commandParams.imageBatch);
+    console.log("chunk size:",parseInt(commandParams.imageBatch));
 
     var mainbar=new ProgressBar(":bar :current / :total :percent",{
         total:timestamps.length,
@@ -28,7 +31,7 @@ async function main()
 
     for (var x=0;x<timestamps.length;x++)
     {
-        await doExtract("azur2.mkv",timestamps[x]);
+        await doExtract(commandParams.targetVid,timestamps[x]);
         // logUpdate(`${x+1}/${timestamps.length}`);
         mainbar.tick();
     }
